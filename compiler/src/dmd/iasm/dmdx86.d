@@ -2674,7 +2674,23 @@ void asm_make_modrm_byte(
         debug (debuga)
             printf("This is an ADDR32\n");
         if (!opnds[0].pregDisp1)
-            mrmb.rm = 0x5;
+        {
+            if (target.isX86_64)
+            {
+                // x86-64: ModRM rm=5,mod=0 means [RIP+disp32]
+                // Need SIB byte: ModRM rm=4 + SIB base=5,index=4 for [disp32]
+                mrmb.rm = 0x4;    // signals SIB byte follows
+                sib.base = 0x5;   // base=5 with mod=0 means disp32
+                sib.index = 0x4;  // index=4 means no index
+                sib.ss = 0;
+                bSib = true;
+                bDisp = true;
+            }
+            else
+            {
+                mrmb.rm = 0x5;    // 32-bit: rm=5,mod=0 means [disp32]
+            }
+        }
         else if (opnds[0].pregDisp2 ||
                  opnds[0].uchMultiplier ||
                  (opnds[0].pregDisp1.val & NUM_MASK) == _ESP)
