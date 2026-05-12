@@ -37,6 +37,7 @@ jobs:
     uses: MSquach/installer/.github/workflows/build_release_template.yml@master
     with:
       release_branch: ${{ github.event.inputs.branch }}
+      installer_repo: "MSquach/installer"
 
   # Bundles and publishes the entire release
   generate_release:
