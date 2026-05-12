@@ -34,7 +34,7 @@ jobs:
   # Build and package a new release for all supported platforms
   build-all-releases:
     name: Build release from ${{ github.event.inputs.branch }}
-    uses: dlang/installer/.github/workflows/build_release_template.yml@master
+    uses: MSquach/installer/.github/workflows/build_release_template.yml@master
     with:
       release_branch: ${{ github.event.inputs.branch }}
 
