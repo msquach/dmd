@@ -163,7 +163,7 @@ public void cgsched_block(block* b)
         scratch &= ~(b.Bregcon.used | b.Bregcon.params | cgstate.mfuncreg);
         scratch &= ~(b.Bregcon.immed.mval | b.Bregcon.cse.mval);
         cgsched_pentium(&b.Bcode,scratch);
-        //printf("after schedule:\n"); WRcodlst(b.Bcode);
+        //printf("after schedule:\n"); code_print_list(b.Bcode);
     }
 }
 
@@ -3191,7 +3191,7 @@ code* simpleops(code* c,regm_t scratch)
     code* c2;
 
     // Worry about using registers not saved yet by prolog
-    scratch &= ~fregsaved;
+    scratch &= ~cgstate.fregsaved;
 
     if (!(scratch & (scratch - 1)))     // if 0 or 1 registers
         return c;

@@ -362,7 +362,7 @@ uint gensaverestore(ref CGstate cg,regm_t regm,ref CodeBuilder cdbsave,ref CodeB
                 uint idx;
                 import dmd.backend.arm.cod3 : REGSAVE_save, REGSAVE_restore;
                 REGSAVE_save(cg.regsave,cdbsave,i,idx);
-                cg.reflocal = true;        // not sure why this is not on the x86 branch
+                cg.reflocal = true;        // registers saved into local stackframe
                 REGSAVE_restore(cg.regsave,cdb,i,idx);
                 restore[i] = cdb.finish();
             }
@@ -396,8 +396,9 @@ uint gensaverestore(ref CGstate cg,regm_t regm,ref CodeBuilder cdbsave,ref CodeB
                 else if (i >= XMM0 || I64 || cg.funcarg.size)
                 {
                     uint idx;
-                    cg.regsave.save(cdbsave, i, idx);
-                    cg.regsave.restore(cdb, i, idx);
+                    REGSAVE_save(cg.regsave, cdbsave, i, idx);
+                    cg.reflocal = true;        // registers saved into local stackframe
+                    REGSAVE_restore(cg.regsave, cdb, i, idx);
                 }
                 else
                 {
@@ -446,7 +447,7 @@ void genstackclean(ref CGstate cg,ref CodeBuilder cdb,uint numpara,regm_t keepms
             numpara == cg.stackpush &&             // if this is all those pushed
             cg.needframe &&                        // and there will be a BP
             !config.windows &&
-            !(cg.regcon.mvar & fregsaved)          // and no registers will be pushed
+            !(cg.regcon.mvar & cg.fregsaved)       // and no registers will be pushed
         )
             genregs(cdb,0x89,BP,SP);  // MOV SP,BP
         else
@@ -3611,8 +3612,9 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
                 if (mi & tosave)
                 {
                     uint idx;
-                    cg.regsave.save(cdbsave, j, idx);
-                    cg.regsave.restore(cdbrestore, j, idx);
+                    REGSAVE_save(cg.regsave, cdbsave, j, idx);
+                    cg.reflocal = true;        // registers saved into local stackframe
+                    REGSAVE_restore(cg.regsave, cdbrestore, j, idx);
                     saved |= mi;
                     keepmsk &= ~mi;             // don't need to keep these for rest of params
                     tosave &= ~mi;
@@ -3679,8 +3681,9 @@ void cdfunc(ref CGstate cg, ref CodeBuilder cdb, elem* e, ref regm_t pretregs)
                         if (mi & tosave)
                         {
                             uint idx;
-                            cg.regsave.save(cdbsave, j, idx);
-                            cg.regsave.restore(cdbrestore, j, idx);
+                            REGSAVE_save(cg.regsave, cdbsave, j, idx);
+                            cg.reflocal = true;        // registers saved into local stackframe
+                            REGSAVE_restore(cg.regsave, cdbrestore, j, idx);
                             saved |= mi;
                             keepmsk &= ~mi;             // don't need to keep these for rest of params
                             tosave &= ~mi;
@@ -3933,7 +3936,7 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
         }
         else if (!tyfunc(s.ty()) || !(config.flags4 & CFG4optimized))
             // so we can replace func at runtime
-            getregs(cdbe,~fregsaved & (mBP | ALLREGS | mES | XMMREGS));
+            getregs(cdbe,~cg.fregsaved & (mBP | ALLREGS | mES | XMMREGS));
         else
             getregs(cdbe,~s.Sregsaved & (mBP | ALLREGS | mES | XMMREGS));
         if (strcmp(s.Sident.ptr, "alloca") == 0)
@@ -4035,7 +4038,7 @@ private void funccall(ref CGstate cg, ref CodeBuilder cdb, elem* e, uint numpara
 
         /* Mask of registers destroyed by the function call
          */
-        regm_t desmsk = (mBP | ALLREGS | mES | XMMREGS) & ~fregsaved;
+        regm_t desmsk = (mBP | ALLREGS | mES | XMMREGS) & ~cg.fregsaved;
 
         // if we can't use loadea()
         if ((!OTleaf(e11.Eoper) || e11.Eoper == OPconst) &&

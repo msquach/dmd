@@ -504,7 +504,7 @@ void prolog_saveregs(ref CGstate cg, ref CodeBuilder cdb, regm_t topush, int cfa
 {
     //printf("prolog_saveregs() topush: %s pushoffuse: %d\n", regm_str(topush), cg.pushoffuse);
     //printf("function: %s\n", funcsym_p.Sident.ptr);
-    assert(!(topush & ~fregsaved));
+    assert(!(topush & ~cg.fregsaved));
     assert(cg.pushoffuse || !topush);
 
     // Save to preallocated section in the stack frame
@@ -971,7 +971,7 @@ void epilog(ref CGstate cg, block* b)
      * by the prolog code. Remember to do them in the reverse
      * order they were pushed.
      */
-    topop = fregsaved & ~cg.mfuncreg;
+    topop = cg.fregsaved & ~cg.mfuncreg;
     epilog_restoreregs(cg, cdbx, topop);
 
     if (cg.usednteh & NTEHjmonitor)
@@ -2346,7 +2346,7 @@ uint codout(int seg, code* c, Barray!ubyte* disasmBuf, ref targ_size_t framehand
  * Debug code to dump code structure.
  */
 
-void WRcodlst(code* c)
+void codeListPrint(code* c)
 {
     for (; c; c = code_next(c))
         code_print(c);

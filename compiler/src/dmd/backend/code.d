@@ -112,8 +112,6 @@ struct REGSAVE
   nothrow:
     @trusted
     void reset() { off = 0; top = 0; idx = 0; alignment = _tysize[TYnptr]/*REGSIZE*/; }
-    void save(ref CodeBuilder cdb, reg_t reg, out uint pidx) { REGSAVE_save (this, cdb, reg, pidx); }
-    void restore(ref CodeBuilder cdb, reg_t reg, uint idx) { REGSAVE_restore(this, cdb, reg, idx); }
 }
 
 /************************************
@@ -227,6 +225,7 @@ struct CGstate
     regm_t mfuncreg;            // mask of registers preserved by function
     regm_t msavereg;            // Mask of registers that we would like to save.
                                 // they are temporaries (set by scodelem())
+    regm_t  fregsaved;          // mask of registers saved across function calls
 
     uint usednteh;              // if !=0, then used NT exception handling
     con_t regcon;               // register contents
